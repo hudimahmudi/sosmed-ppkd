@@ -6,6 +6,7 @@ import {
   updatePost,
   deletePost,
   toggleLike,
+  toggleCommentLike,
   addComment,
 } from '../controllers/post.controller.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -19,6 +20,7 @@ router.get('/', listPosts); // lihat feed
 router.post('/', uploadImage, createPost); // buat post
 router.put('/:id', uploadImage, updatePost); // edit post (cek pemilik di controller)
 router.delete('/:id', deletePost); // hapus post (cek pemilik di controller)
+router.post('/comments/:commentId/like', toggleCommentLike); // like / unlike komentar  <-- TAMBAH
 router.post('/:id/like', toggleLike); // like / unlike
 router.post('/:id/comments', uploadImage, addComment); // kirim komentar
 

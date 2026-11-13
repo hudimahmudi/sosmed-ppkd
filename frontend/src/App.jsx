@@ -7,6 +7,7 @@ import Notice from './components/Notice.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Home from './pages/Home.jsx';
+import Profile from './pages/Profile.jsx';
 import EditProfile from './pages/EditProfile.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
 
@@ -28,6 +29,7 @@ export default function App() {
         {/* Halaman terproteksi: wajib login */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home />} />
+          <Route path="/users/:id" element={<Profile />} />   {/* <-- TAMBAH */}
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/profile/password" element={<ChangePassword />} />
         </Route>

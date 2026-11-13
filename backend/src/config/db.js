@@ -94,6 +94,47 @@ await pool.query(`
   ) ENGINE=InnoDB
 `);
 
+// ======================= FITUR TAMBAHAN =======================
+// Tabel lama tidak diubah ulang oleh CREATE TABLE IF NOT EXISTS, jadi kolom baru
+// ditambahkan lewat fungsi ini. Aman dijalankan berkali-kali: kalau kolom sudah ada, dilewati.
+async function addColumnIfMissing(table, column, definition) {
+  const [rows] = await pool.query(
+    `SELECT 1 FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [DB_NAME, table, column]
+  );
+  if (rows.length > 0) return false; // sudah ada
+  await pool.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+  return true; // baru ditambahkan
+}
+
+// Fitur 2 (balas komentar): comments.parent_id menunjuk ke komentar yang dibalas.
+// NULL = komentar biasa. Komentar induk dihapus -> balasannya ikut terhapus (CASCADE).
+const parentAdded = await addColumnIfMissing('comments', 'parent_id', 'BIGINT UNSIGNED NULL AFTER user_id');
+if (parentAdded) {
+  await pool.query(
+    `ALTER TABLE comments
+     ADD CONSTRAINT fk_comments_parent FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE`
+  );
+}
+
+// Fitur 3 (like komentar): sama seperti tabel likes, tapi untuk komentar.
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS comment_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    comment_id INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_comment_likes_user_comment (user_id, comment_id),
+    CONSTRAINT fk_comment_likes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_likes_comment FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
+  ) ENGINE=InnoDB
+`);
+
+// Fitur 5 (lokasi postingan): nama lokasi + koordinat (dibulatkan 2 desimal, sekitar 1 km)
+await addColumnIfMissing('posts', 'location_name', 'VARCHAR(120) NULL');
+await addColumnIfMissing('posts', 'latitude', 'DECIMAL(5,2) NULL');
+await addColumnIfMissing('posts', 'longitude', 'DECIMAL(5,2) NULL');
 console.log(`Database "${DB_NAME}" siap dipakai`);
 
 export default pool; // diekspor supaya bisa dipakai file lain

@@ -69,3 +69,26 @@ export async function changePassword(req, res) {
 
   res.json({ message: 'Password berhasil diubah.' });
 }
+// GET /api/profile/:id -> lihat profil siapa saja (diri sendiri atau orang lain)
+// Email sengaja TIDAK dikirim supaya tidak bocor ke pengguna lain
+export async function getProfile(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
+  }
+
+  const [rows] = await db.execute('SELECT id, name, avatar, bio, created_at FROM users WHERE id = ?', [id]);
+  if (rows.length === 0) {
+    return res.status(404).json({ message: 'Pengguna tidak ditemukan.' });
+  }
+
+  res.json({
+    profile: {
+      id: rows[0].id,
+      name: rows[0].name,
+      avatar: rows[0].avatar,
+      bio: rows[0].bio,
+      createdAt: rows[0].created_at,
+    },
+  });
+}
